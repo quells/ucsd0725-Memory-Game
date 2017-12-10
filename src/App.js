@@ -1,21 +1,29 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import MemoryGame from "./MemoryGame";
 
 class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      difficulty: 3
+    };
+  }
+
   render() {
     return (
       <div className="app-root">
-        <header className="primary">
-          <div className="container text-center mt-3">
+        <header>
+          <div className="container text-center mt-2 pt-2 pb-2">
             <h1>Memory Game</h1>
           </div>
         </header>
-        <main>
-          Remember this!
+        <main className="container">
+          <MemoryGame difficulty={this.state.difficulty} />
         </main>
         <footer>
-          Memory Game
+          <div className="container text-center">
+            &copy; 2017 Kai Wells
+          </div>
         </footer>
       </div>
     );
