@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style media="screen">
+      body {background:black;}
+    </style>
+    <title>Pixellate Image</title>
+  </head>
+  <body>
+    <canvas id="canvas" width="512" height="512"></canvas>
+    <br>
+    <button onclick="fade()">Fade</button>
+
+    <script type="text/javascript">
+      var canvas = document.getElementById("canvas");
+      var ctx = canvas.getContext("2d");
+
+      var canFade = false;
+      var frames = new Array(10);
+      var frameCount = 0;
+      for (let i = 0; i < 10; i++) {
+        pixellate("9.jpg", 512 >> i, 512, 1 - 0.1*i, function(pxd) {
+          frames[i] = pxd;
+          frameCount++;
+          if (i === 0) {
+            ctx.drawImage(pxd.canvas, 0, 0);
+          }
+        });
+      }
+      var processingLoop = setInterval(function() {
+        if (frameCount >= frames.length) {
+          clearInterval(processingLoop);
+          canFade = true;
+        }
+      }, 10);
+
+      var fadeDirOut = true;
+      function fade() {
+        if (canFade && !fading) {
+          if (fadeDirOut) {
+            frameIndex = 0;
+            lastDrawTime = Date.now();
+            fadeDirOut = false;
+            fadeOutLoop();
+          } else {
+            frameIndex = 0;
+            lastDrawTime = Date.now();
+            fadeDirOut = true;
+            fadeInLoop();
+          }
+        }
+      }
+
+      var fading = false;
+      var frameIndex = 0;
+      var lastDrawTime = Date.now();
+      var targetFrameTime = 83;
+      function fadeOutLoop() {
+        if (frameIndex >= frames.length) {
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, 512, 512);
+          fading = false;
+          return;
+        }
+        var delta = Date.now() - lastDrawTime;
+        if (delta >= targetFrameTime) {
+          lastDrawTime = Date.now()
+          ctx.drawImage(frames[frameIndex].canvas, 0, 0);
+          frameIndex++;
+        }
+        requestAnimationFrame(fadeOutLoop);
+      }
+      function fadeInLoop() {
+        if (frameIndex >= frames.length) {
+          ctx.drawImage(frames[0].canvas, 0, 0);
+          fading = false;
+          return;
+        }
+        var delta = Date.now() - lastDrawTime;
+        if (delta >= targetFrameTime) {
+          lastDrawTime = Date.now();
+          ctx.drawImage(frames[9-frameIndex].canvas, 0, 0);
+          frameIndex++;
+        }
+        requestAnimationFrame(fadeInLoop);
+      }
+
+      function pixellate(fn, miniSize, finalSize, fade, cb) {
+        var scale = finalSize / miniSize;
+        var mini = new Canvas(miniSize);
+        var final = new Canvas(finalSize);
+        loadImage(fn, function(img) {
+          mini.ctx.drawImage(img, 0, 0, miniSize, miniSize);
+          final.ctx.drawImage(mini.canvas, 0, 0, finalSize, finalSize);
+
+          var src = mini.ctx.getImageData(0, 0, miniSize, miniSize);
+          var dest = final.ctx.getImageData(0, 0, finalSize, finalSize);
+
+          var idx1, idx2, x, y, oy;
+          for (var j = 0; j < miniSize; j++) {
+            oy = j * miniSize;
+            y = j * scale;
+            for (var i = 0; i < miniSize; i++) {
+              idx1 = (i + oy) * 4;
+              x = i * scale;
+              for (var dy = 0; dy < scale; dy++) {
+                for (var dx = 0; dx < scale; dx++) {
+                  idx2 = (x+dx + (y+dy)*miniSize*scale) * 4;
+                  dest.data[idx2]   = src.data[idx1] * fade;
+                  dest.data[idx2+1] = src.data[idx1+1] * fade;
+                  dest.data[idx2+2] = src.data[idx1+2] * fade;
+                  dest.data[idx2+3] = 255;
+                }
+              }
+            }
+          }
+          final.ctx.putImageData(dest, 0, 0);
+          cb(final);
+        });
+      }
+
+      function loadImage(fn, cb) {
+        var img = new Image();
+        img.onload = function() {
+          cb(img);
+        };
+        img.src = fn;
+      }
+
+      function Canvas(s) {
+        this.canvas = document.createElement("canvas");
+        this.canvas.width = s;
+        this.canvas.height = s;
+        this.ctx = this.canvas.getContext("2d");
+      }
+    </script>
+  </body>
+</html>
