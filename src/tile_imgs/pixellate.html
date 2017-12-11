@@ -20,7 +20,7 @@
       var frames = new Array(10);
       var frameCount = 0;
       for (let i = 0; i < 10; i++) {
-        pixellate("9.jpg", 512 >> i, 512, 1 - 0.1*i, function(pxd) {
+        pixellate("8.jpg", 512 >> i, 512, 1 - 0.1*i, function(pxd) {
           frames[i] = pxd;
           frameCount++;
           if (i === 0) {
