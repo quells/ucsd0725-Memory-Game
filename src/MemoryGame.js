@@ -1,8 +1,5 @@
 import React, { Component } from "react";
 import MemoryGameTile from "./MemoryGameTile";
-import axios from "axios";
-
-const loremPixelURL = "https://cors-anywhere.herokuapp.com/lorempixel.com/400/400/";
 
 class MemoryGame extends Component {
   constructor(props) {
@@ -24,36 +21,26 @@ class MemoryGame extends Component {
       imgGrid: imgGrid,
       imgs: new Array(imageCount + extraImageCount)
     };
-
-    let getImages = [];
-    // for (let i = 0; i < imageCount + extraImageCount; i++) {
-    //   getImages.push(axios.get(loremPixelURL));
-    // }
-    // var self = this;
-    // axios.all(getImages)
-    //   .then(axios.spread(function() {
-    //     let imgs = [];
-    //     for (let i = 0; i < arguments.length; i++) {
-    //       let imgResponse = arguments[i];
-    //       if (imgResponse.status !== 200) {
-    //         console.log("Response not OK");
-    //         console.log(imgResponse);
-    //         return;
-    //       }
-    //       imgs.push(imgResponse.data);
-    //     }
-    //     self.setState({imgs: imgs});
-    //   }))
-    // TODO: display images
   }
 
   render() {
+    let diff = this.props.difficulty;
     let tiles = this.state.imgGrid
-      .map((idx, i) => [idx, i])
-      .map(arr => <MemoryGameTile key={"tile-" + arr[1]} difficulty={this.props.difficulty} imgIndex={arr[0]}/>);
+      .map((img, i) => {
+        let tileId = "tile-" + i;
+        return <MemoryGameTile key={tileId} imgIndex={img} />
+      });
+    let rows = new Array(diff).fill(0)
+      .map((_, i) => {
+        return (
+          <div className="row justify-content-center" key={"row" + i}>
+            {tiles.slice(i*diff, (i+1)*diff)}
+          </div>
+        )
+      })
     return (
-      <div className="row">
-        {tiles}
+      <div>
+        {rows}
       </div>
     );
   }

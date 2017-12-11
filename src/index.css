@@ -11,7 +11,10 @@ header {
 }
 
 .tile {
-  min-height: 10px;
   text-align: center;
-  padding: 1rem;
+  padding: 0.25rem;
+}
+
+.tile img {
+  width: 100%;
 }
