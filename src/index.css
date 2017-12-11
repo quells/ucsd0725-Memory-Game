@@ -13,6 +13,7 @@ header {
 .tile {
   text-align: center;
   padding: 0.25rem;
+  max-width: 30vh;
 }
 
 .tile img {

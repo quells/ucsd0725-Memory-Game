@@ -1,6 +1,22 @@
 import React, { Component } from "react";
 import MemoryGameTile from "./MemoryGameTile";
 
+function Shuffle(arr) {
+    // Fisher-Yates (Knuth) Algorithm
+    var shuffled = arr.slice(0); // Copy by value
+    for (var i = arr.length-1; i > 0; i--) {
+        // 1 <= i <= n-1
+        var j = Math.floor(Math.random()*(i+1)); // 0 <= j <= i
+        // Swap i and j, copying by value
+        var temp = shuffled[i];
+        shuffled[i] = shuffled[j];
+        shuffled[j] = temp;
+    }
+    return shuffled;
+}
+
+const TileImageCount = 20;
+
 class MemoryGame extends Component {
   constructor(props) {
     super(props);
@@ -10,12 +26,13 @@ class MemoryGame extends Component {
     let extraImageCount = needsExtraImage ? 1 : 0;
 
     let imgGrid = [];
+    let offset = Math.floor(Math.random() * TileImageCount);
     for (let i = 0; i < imageCount; i++) {
-      imgGrid.push(i);
-      imgGrid.push(i);
+      imgGrid.push((i + offset) % TileImageCount);
+      imgGrid.push((i + offset) % TileImageCount);
     }
-    if (needsExtraImage) imgGrid.push(imageCount);
-    // TODO: shuffle images
+    if (needsExtraImage) imgGrid.push((imageCount + offset) % TileImageCount);
+    imgGrid = Shuffle(imgGrid);
 
     this.state = {
       imgGrid: imgGrid,
