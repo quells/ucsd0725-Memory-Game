@@ -19,16 +19,16 @@ import React, { Component } from 'react';
 //   }
 // }
 
-const FrameTime = 50;
+// const FrameTime = 50;
 
 class MemoryGameTile extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      fadeIndex: 0,
-      fadeDir: 1,
-      fadeLock: false
-    };
+    // this.state = {
+    //   fadeIndex: 0,
+    //   fadeDir: 1,
+    //   fadeLock: false
+    // };
 
     this.handleClick = this.handleClick.bind(this);
     this.handleFadeLoop = this.handleFadeLoop.bind(this);
@@ -42,41 +42,17 @@ class MemoryGameTile extends Component {
   }
 
   handleFadeLoop() {
-    if (this.state.fadeDir === 1 && this.state.fadeIndex < 10) {
-      setTimeout(() => {
-        this.setState({fadeIndex: this.state.fadeIndex+1});
-        if (this.state.fadeIndex+1 < 10) {
-          this.handleFadeLoop();
-        } else {
-          this.setState({fadeDir: -1, fadeLock: false});
-        }
-      }, FrameTime);
-      return;
-    }
-    if (this.state.fadeDir === -1 && this.state.fadeIndex > 0) {
-      setTimeout(() => {
-        this.setState({fadeIndex: this.state.fadeIndex-1});
-        if (this.state.fadeIndex-1 > 0) {
-          this.handleFadeLoop();
-        } else {
-          this.setState({fadeDir: 1, fadeLock: false});
-        }
-      }, FrameTime);
-      return;
-    }
+
   }
 
   render() {
-    let frames = this.props.imgs[this.props.imgIndex];
-    let imgSrc = frames[this.state.fadeIndex];
-    let isHidden = this.props.hidden[this.props.imgIndex];
-    let isSolved = this.props.solved[this.props.imgIndex];
-    if (this.props.ready && !isSolved && isHidden) {
-      imgSrc = frames[9];
-    }
+    let isHidden = this.props.hidden[this.props.positionIndex];
+    let isSolved = this.props.solved[this.props.positionIndex];
+    let text = this.props.imgIndex;
+    if (this.props.ready && !isSolved && isHidden) text = "?";
     return (
       <div className="tile col">
-        <img src={imgSrc} onClick={this.handleClick} alt="Memory Tile" />
+        <button className="alert alert-warning" onClick={e => this.props.clickHandler(this.props.positionIndex)}>{text}</button>
       </div>
     );
   }

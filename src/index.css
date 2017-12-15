@@ -16,6 +16,11 @@ header {
   max-width: 25vh;
 }
 
+.tile button {
+  width: 100%;
+  padding: 1em 0;
+}
+
 .tile img {
   width: 100%;
 }
