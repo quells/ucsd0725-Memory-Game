@@ -1,7 +1,15 @@
 import React, { Component } from "react";
 import MemoryGameTile from "./MemoryGameTile";
 
-function Shuffle(arr) {
+const TileImageCount = 20;
+const AnimationFrameCount = 10;
+
+var tileImageLocs = new Array(TileImageCount);
+for (let i = 0; i < TileImageCount; i++) {
+  tileImageLocs[i] = require(`./tile_imgs/${i}.jpg`);
+}
+
+function shuffle(arr) {
     // Fisher-Yates (Knuth) Algorithm
     var shuffled = arr.slice(0); // Copy by value
     for (var i = arr.length-1; i > 0; i--) {
@@ -15,7 +23,63 @@ function Shuffle(arr) {
     return shuffled;
 }
 
-const TileImageCount = 20;
+class SquareCanvas {
+  constructor(size) {
+    this.canvas = document.createElement("canvas");
+    this.canvas.width  = size;
+    this.canvas.height = size;
+    this.ctx = this.canvas.getContext("2d");
+  }
+}
+
+function loadImage(fn, cb) {
+  var img = new Image();
+  img.onload = function() {
+    let canvas = document.createElement("canvas");
+    canvas.width = 512; canvas.height = 512;
+    let ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    let imgData = canvas.toDataURL();
+    cb(imgData);
+  };
+  img.src = fn;
+}
+
+function pixellate(imgData, miniSize, finalSize, fade, cb) {
+  var scale = finalSize / miniSize;
+  var mini = new SquareCanvas(miniSize);
+  var fnl = new SquareCanvas(finalSize);
+  var img = new Image();
+  img.onload = function() {
+    mini.ctx.drawImage(img, 0, 0, miniSize, miniSize);
+    fnl.ctx.drawImage(mini.canvas, 0, 0, finalSize, finalSize);
+    var src = mini.ctx.getImageData(0, 0, miniSize, miniSize);
+    var dest = fnl.ctx.getImageData(0, 0, finalSize, finalSize);
+
+    var idx1, idx2, x, y, oy;
+    for (let j = 0; j < miniSize; j++) {
+      oy = j * miniSize;
+      y = j * scale;
+      for (let i = 0; i < miniSize; i++) {
+        idx1 = (i + oy) * 4;
+        x = i * scale;
+        for (let dy = 0; dy < scale; dy++) {
+          for (let dx = 0; dx < scale; dx++) {
+            idx2 = (x+dx + (y+dy)*miniSize*scale) * 4;
+            dest.data[idx2]   = src.data[idx1] * fade;
+            dest.data[idx2+1] = src.data[idx1+1] * fade;
+            dest.data[idx2+2] = src.data[idx1+2] * fade;
+            dest.data[idx2+3] = 255;
+          }
+        }
+      }
+    }
+    fnl.ctx.putImageData(dest, 0, 0);
+    let pxdData = fnl.canvas.toDataURL("image/jpeg", 0.6);
+    cb(pxdData);
+  };
+  img.src = imgData;
+}
 
 class MemoryGame extends Component {
   constructor(props) {
@@ -32,34 +96,74 @@ class MemoryGame extends Component {
       imgGrid.push((i + offset) % TileImageCount);
     }
     if (needsExtraImage) imgGrid.push((imageCount + offset) % TileImageCount);
-    imgGrid = Shuffle(imgGrid);
+    imgGrid = shuffle(imgGrid);
 
     this.state = {
       imgGrid: imgGrid,
-      imgs: new Array(imageCount + extraImageCount)
+      imgs: null,
+      imgsPixellated: false,
+      readyToPlay: false
     };
+
+    var numImagesProcessed = 0;
+    var processedImages = new Array(TileImageCount);
+    var processingLoops = new Array(TileImageCount);
+    for (let i = 0; i < TileImageCount; i++) {
+      let frames = new Array(AnimationFrameCount);
+      let frameCount = 0;
+      loadImage(tileImageLocs[i], imgData => {
+        for (let j = 0; j < AnimationFrameCount; j++) {
+          pixellate(imgData, 512 >> j, 512, 1 - 0.1*j, pxd => {
+            frames[j] = pxd;
+            frameCount++;
+          });
+        }
+      });
+      processingLoops[i] = setInterval(() => {
+        if (frameCount >= frames.length) {
+          clearInterval(processingLoops[i]);
+          processedImages[i] = frames;
+          numImagesProcessed++;
+        }
+      }, 10);
+    }
+
+    var waitForImageProcessing = setInterval(() => {
+      if (numImagesProcessed >= TileImageCount) {
+        clearInterval(waitForImageProcessing);
+        this.setState({imgs: processedImages, imgsPixellated: true});
+      }
+    }, 10);
   }
 
   render() {
-    let diff = this.props.difficulty;
-    let tiles = this.state.imgGrid
-      .map((img, i) => {
-        let tileId = "tile-" + i;
-        return <MemoryGameTile key={tileId} imgIndex={img} />
-      });
-    let rows = new Array(diff).fill(0)
-      .map((_, i) => {
-        return (
-          <div className="row justify-content-center" key={"row" + i}>
-            {tiles.slice(i*diff, (i+1)*diff)}
-          </div>
-        )
-      })
-    return (
-      <div>
-        {rows}
-      </div>
-    );
+    if (this.state.imgsPixellated) {
+      let diff = this.props.difficulty;
+      let tiles = this.state.imgGrid
+        .map((img, i) => {
+          let tileId = "tile-" + i;
+          return <MemoryGameTile key={tileId} imgs={this.state.imgs} imgIndex={img} hidden={false} />
+        });
+      let rows = new Array(diff).fill(0)
+        .map((_, i) => {
+          return (
+            <div className="row justify-content-center" key={"row" + i}>
+              {tiles.slice(i*diff, (i+1)*diff)}
+            </div>
+          )
+        })
+      return (
+        <div>
+          {rows}
+        </div>
+      )
+    } else {
+      return (
+        <div>
+          <h2 className="text-center mt-3">Loading&hellip;</h2>
+        </div>
+      );
+    }
   }
 }
 
