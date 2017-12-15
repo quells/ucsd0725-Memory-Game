@@ -50,9 +50,10 @@ class MemoryGameTile extends Component {
     let isSolved = this.props.solved[this.props.positionIndex];
     let text = this.props.imgIndex;
     if (this.props.ready && !isSolved && isHidden) text = "?";
+    let color = isSolved ? "success" : "warning"
     return (
       <div className="tile col">
-        <button className="alert alert-warning" onClick={e => this.props.clickHandler(this.props.positionIndex)}>{text}</button>
+        <button className={`alert alert-${color}`} onClick={e => this.props.clickHandler(this.props.positionIndex)}>{text}</button>
       </div>
     );
   }

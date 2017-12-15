@@ -21,8 +21,32 @@ class MemoryGame extends Component {
   constructor(props) {
     super(props);
 
-    let imageCount = Math.floor(this.props.difficulty * this.props.difficulty / 2);
-    let needsExtraImage = this.props.difficulty % 2 === 1;
+    let indexGrid = [];
+    let hiddenGrid = [];
+    let solvedGrid = [];
+
+    this.state = {
+      difficulty: this.props.difficulty,
+      toSolveCount: 100,
+      imgs: null,
+      indexGrid: indexGrid,
+      imgsLoaded: true,
+      readyToPlay: false,
+      hiddenGrid: hiddenGrid,
+      solvedGrid: solvedGrid
+    };
+
+    this.handleBegin = this.handleBegin.bind(this);
+    this.handleTileClick = this.handleTileClick.bind(this);
+  }
+
+  componentWillMount() {
+    this.resetState(this.props.difficulty);
+  }
+
+  resetState(newDifficulty) {
+    let imageCount = Math.floor(newDifficulty * newDifficulty / 2);
+    let needsExtraImage = newDifficulty % 2 === 1;
     let extraImageCount = needsExtraImage ? 1 : 0;
 
     let indexGrid = [];
@@ -37,17 +61,15 @@ class MemoryGame extends Component {
     let hiddenGrid = new Array(2*imageCount + extraImageCount).fill(true);
     let solvedGrid = new Array(2*imageCount + extraImageCount).fill(false);
 
-    this.state = {
-      imgs: null,
-      indexGrid: indexGrid,
-      imgsLoaded: true,
+    this.setState({
       readyToPlay: false,
+      difficulty: newDifficulty,
+      toSolveCount: 2*imageCount,
+      indexGrid: indexGrid,
       hiddenGrid: hiddenGrid,
-      solvedGrid: solvedGrid
-    };
-
-    this.handleBegin = this.handleBegin.bind(this);
-    this.handleTileClick = this.handleTileClick.bind(this);
+      solvedGrid: solvedGrid,
+      imgsLoaded: true
+    });
   }
 
   handleBegin() {
@@ -83,6 +105,13 @@ class MemoryGame extends Component {
             if (v === shown[0]) sg[i] = true;
           });
           hg = hg.fill(true);
+          let solvedCount = sg.reduce((acc, s) => {
+            if (s) return acc + 1;
+            return acc;
+          }, 0);
+          if (solvedCount === this.state.toSolveCount) {
+            this.resetState(this.state.difficulty+1);
+          }
           // TODO: calc if solvedCount === imageCount for current difficulty
         }
         this.setState({hiddenGrid: hg, solvedGrid: sg});
@@ -94,7 +123,7 @@ class MemoryGame extends Component {
 
   render() {
     if (this.state.imgsLoaded) {
-      let diff = this.props.difficulty;
+      let diff = this.state.difficulty;
       let tiles = this.state.indexGrid
         .map((imgIndex, positionIndex) => {
           let tileId = "tile-" + positionIndex;
