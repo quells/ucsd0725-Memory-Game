@@ -19,6 +19,8 @@ import React, { Component } from 'react';
 //   }
 // }
 
+const FrameTime = 50;
+
 class MemoryGameTile extends Component {
   constructor(props) {
     super(props);
@@ -33,6 +35,7 @@ class MemoryGameTile extends Component {
   }
 
   handleClick() {
+    if (!this.props.ready) return;
     if (this.state.fadeLock) return;
     this.setState({fadeLock: true});
     this.handleFadeLoop()
@@ -47,7 +50,7 @@ class MemoryGameTile extends Component {
         } else {
           this.setState({fadeDir: -1, fadeLock: false});
         }
-      }, 83);
+      }, FrameTime);
       return;
     }
     if (this.state.fadeDir === -1 && this.state.fadeIndex > 0) {
@@ -58,15 +61,22 @@ class MemoryGameTile extends Component {
         } else {
           this.setState({fadeDir: 1, fadeLock: false});
         }
-      }, 83);
+      }, FrameTime);
       return;
     }
   }
 
   render() {
+    let frames = this.props.imgs[this.props.imgIndex];
+    let imgSrc = frames[this.state.fadeIndex];
+    let isHidden = this.props.hidden[this.props.imgIndex];
+    let isSolved = this.props.solved[this.props.imgIndex];
+    if (this.props.ready && !isSolved && isHidden) {
+      imgSrc = frames[9];
+    }
     return (
       <div className="tile col">
-        <img src={this.props.imgs[this.props.imgIndex][this.state.fadeIndex]} onClick={this.handleClick} alt="Memory Tile" />
+        <img src={imgSrc} onClick={this.handleClick} alt="Memory Tile" />
       </div>
     );
   }

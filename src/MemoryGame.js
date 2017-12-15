@@ -98,13 +98,21 @@ class MemoryGame extends Component {
     if (needsExtraImage) imgGrid.push((imageCount + offset) % TileImageCount);
     imgGrid = shuffle(imgGrid);
 
+    let hiddenGrid = new Array(2*imageCount + extraImageCount).fill(true);
+    let solvedGrid = new Array(2*imageCount + extraImageCount).fill(false);
+
     this.state = {
       imgGrid: imgGrid,
       imgs: null,
       imgsPixellated: false,
-      readyToPlay: false
+      readyToPlay: false,
+      hiddenGrid: hiddenGrid,
+      solvedGrid: solvedGrid
     };
 
+    this.handleBegin = this.handleBegin.bind(this);
+
+    // Generate pixellated images
     var numImagesProcessed = 0;
     var processedImages = new Array(TileImageCount);
     var processingLoops = new Array(TileImageCount);
@@ -136,13 +144,17 @@ class MemoryGame extends Component {
     }, 10);
   }
 
+  handleBegin() {
+    this.setState({ready: true});
+  }
+
   render() {
     if (this.state.imgsPixellated) {
       let diff = this.props.difficulty;
       let tiles = this.state.imgGrid
         .map((img, i) => {
           let tileId = "tile-" + i;
-          return <MemoryGameTile key={tileId} imgs={this.state.imgs} imgIndex={img} hidden={false} />
+          return (<MemoryGameTile key={tileId} imgs={this.state.imgs} imgIndex={img} hidden={this.state.hiddenGrid} solved={this.state.solvedGrid} ready={this.state.ready} />)
         });
       let rows = new Array(diff).fill(0)
         .map((_, i) => {
@@ -151,12 +163,23 @@ class MemoryGame extends Component {
               {tiles.slice(i*diff, (i+1)*diff)}
             </div>
           )
-        })
-      return (
-        <div>
-          {rows}
-        </div>
-      )
+        });
+      if (this.state.ready) {
+        return (
+          <div>
+            {rows}
+          </div>
+        );
+      } else {
+        return (
+          <div>
+            {rows}
+            <div className="text-center">
+              <button className="btn btn-primary" onClick={this.handleBegin}>Begin</button>
+            </div>
+          </div>
+        );
+      }
     } else {
       return (
         <div>
